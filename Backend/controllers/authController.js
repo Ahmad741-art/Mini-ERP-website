@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { generateToken } = require('../../middleware/auth');
+const { generateToken } = require('../middleware/auth');
 
 // @desc    Registrera ny användare
 // @route   POST /api/auth/register
