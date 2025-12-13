@@ -1,0 +1,195 @@
+.invoices-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.invoices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.invoices-header h1 {
+  font-size: 28px;
+  color: #333;
+  margin: 0;
+}
+
+.invoices-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.invoices-filters {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.invoices-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.invoices-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invoices-table thead {
+  background-color: #f8f9fa;
+}
+
+.invoices-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.invoices-table td {
+  padding: 15px;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+  color: #333;
+}
+
+.invoices-table tbody tr {
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.invoices-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.invoices-table tbody tr.overdue {
+  background-color: #fff5f5;
+}
+
+.invoice-number {
+  font-weight: 600;
+  color: #007bff;
+  font-family: 'Courier New', monospace;
+}
+
+.invoice-customer {
+  font-weight: 500;
+}
+
+.invoice-status {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.invoice-status.draft {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.invoice-status.sent {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.invoice-status.paid {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.invoice-status.overdue {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.invoice-status.cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.invoice-amount {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.invoice-amount.paid {
+  color: #28a745;
+}
+
+.invoice-amount.unpaid {
+  color: #dc3545;
+}
+
+.invoice-date {
+  color: #666;
+  font-size: 13px;
+}
+
+.due-date {
+  font-size: 13px;
+}
+
+.due-date.overdue {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.due-date.soon {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+.due-date.normal {
+  color: #666;
+}
+
+.overdue-warning {
+  background-color: #f8d7da;
+  border-left: 4px solid #dc3545;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.overdue-warning h3 {
+  margin: 0 0 10px 0;
+  color: #721c24;
+  font-size: 16px;
+}
+
+.overdue-warning p {
+  margin: 0;
+  color: #721c24;
+}
+
+@media (max-width: 768px) {
+  .invoices-table {
+    font-size: 12px;
+  }
+
+  .invoices-table th,
+  .invoices-table td {
+    padding: 10px 8px;
+  }
+
+  .invoices-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
