@@ -1,85 +1,181 @@
-const Invoice = require('../models/Invoice');
+const Article = require('../models/Article');
+const StockMovement = require('../models/StockMovement');
 const Order = require('../models/Order');
 
-// @desc    Hämta alla fakturor
-// @route   GET /api/invoices
+// @desc    Hämta lageröversikt
+// @route   GET /api/stock
 // @access  Private
-exports.getInvoices = async (req, res) => {
+exports.getStockOverview = async (req, res) => {
   try {
-    const { status, startDate, endDate, customer } = req.query;
+    const { category, lowStock, search } = req.query;
+    
+    let query = { active: true };
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    if (lowStock === 'true') {
+      query.$expr = { $lte: ['$stockQuantity', '$minStockLevel'] };
+    }
+    
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    const articles = await Article.find(query).sort({ articleNumber: 1 });
+
+    res.json({
+      success: true,
+      count: articles.length,
+      data: articles
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Fel vid hämtning av lageröversikt',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Hämta lagerrörelser
+// @route   GET /api/stock/movements
+// @access  Private
+exports.getStockMovements = async (req, res) => {
+  try {
+    const { articleId, movementType, startDate, endDate } = req.query;
     
     let query = {};
     
-    if (status) {
-      query.status = status;
+    if (articleId) {
+      query.article = articleId;
     }
     
-    if (customer) {
-      query['customer.name'] = new RegExp(customer, 'i');
+    if (movementType) {
+      query.movementType = movementType;
     }
     
     if (startDate || endDate) {
-      query.invoiceDate = {};
-      if (startDate) query.invoiceDate.$gte = new Date(startDate);
-      if (endDate) query.invoiceDate.$lte = new Date(endDate);
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
     }
 
-    const invoices = await Invoice.find(query)
-      .populate('order')
-      .populate('createdBy', 'name email')
-      .sort({ invoiceDate: -1 });
+    const movements = await StockMovement.find(query)
+      .populate('article', 'articleNumber name')
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(100);
 
     res.json({
       success: true,
-      count: invoices.length,
-      data: invoices
+      count: movements.length,
+      data: movements
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Fel vid hämtning av fakturor',
+      message: 'Fel vid hämtning av lagerrörelser',
       error: error.message
     });
   }
 };
 
-// @desc    Hämta en faktura
-// @route   GET /api/invoices/:id
+// @desc    Skapa lagerrörelse
+// @route   POST /api/stock/movement
 // @access  Private
-exports.getInvoice = async (req, res) => {
+exports.createStockMovement = async (req, res) => {
   try {
-    const invoice = await Invoice.findById(req.params.id)
-      .populate('order')
-      .populate('createdBy', 'name email');
+    const { article, movementType, quantity, reference, notes } = req.body;
 
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Faktura hittades inte'
+    const movement = await StockMovement.createMovement({
+      article,
+      movementType,
+      quantity,
+      reference: reference || 'adjustment',
+      notes,
+      user: req.user._id
+    });
+
+    const populatedMovement = await StockMovement.findById(movement._id)
+      .populate('article', 'articleNumber name')
+      .populate('user', 'name email');
+
+    // Emit socket event
+    if (req.io) {
+      req.io.emit('stock:updated', populatedMovement);
+    }
+
+    res.status(201).json({
+      success: true,
+      data: populatedMovement
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Fel vid skapande av lagerrörelse',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Hämta plockrader
+// @route   GET /api/stock/picking
+// @access  Private
+exports.getPickingLines = async (req, res) => {
+  try {
+    const orders = await Order.find({ 
+      status: 'ready_to_pick' 
+    })
+    .populate('orderLines.article')
+    .populate('createdBy', 'name email')
+    .sort({ createdAt: 1 });
+
+    // Flatten to picking lines
+    const pickingLines = [];
+    
+    orders.forEach(order => {
+      order.orderLines.forEach(line => {
+        if (!line.isPicked) {
+          pickingLines.push({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            customer: order.customer,
+            lineId: line._id,
+            article: line.article,
+            articleNumber: line.articleNumber,
+            articleName: line.articleName,
+            quantity: line.quantity,
+            pickedQuantity: line.pickedQuantity,
+            isPicked: line.isPicked
+          });
+        }
       });
-    }
+    });
 
     res.json({
       success: true,
-      data: invoice
+      count: pickingLines.length,
+      data: pickingLines
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Fel vid hämtning av faktura',
+      message: 'Fel vid hämtning av plockrader',
       error: error.message
     });
   }
 };
 
-// @desc    Skapa faktura från order
-// @route   POST /api/invoices
+// @desc    Färdigställ plockrad
+// @route   PUT /api/stock/picking/:orderId/:lineId
 // @access  Private
-exports.createInvoice = async (req, res) => {
+exports.completePickingLine = async (req, res) => {
   try {
-    const { orderId, vatRate, notes } = req.body;
+    const { orderId, lineId } = req.params;
+    const { pickedQuantity } = req.body;
 
-    // Hämta order
     const order = await Order.findById(orderId).populate('orderLines.article');
 
     if (!order) {
@@ -89,265 +185,103 @@ exports.createInvoice = async (req, res) => {
       });
     }
 
-    // Kontrollera att order är plockad
-    if (order.status !== 'picked') {
-      return res.status(400).json({
+    const line = order.orderLines.id(lineId);
+
+    if (!line) {
+      return res.status(404).json({
         success: false,
-        message: 'Order måste vara plockad innan faktura kan skapas'
+        message: 'Orderrad hittades inte'
       });
     }
 
-    // Kontrollera om faktura redan finns för denna order
-    const existingInvoice = await Invoice.findOne({ order: orderId });
-    if (existingInvoice) {
+    if (line.isPicked) {
       return res.status(400).json({
         success: false,
-        message: 'Faktura finns redan för denna order'
+        message: 'Orderrad är redan plockad'
       });
     }
 
-    // Skapa fakturarader från orderrader
-    const invoiceLines = order.orderLines.map(line => ({
-      articleNumber: line.articleNumber,
-      articleName: line.articleName,
-      quantity: line.quantity,
-      price: line.price,
-      total: line.quantity * line.price
-    }));
+    // Markera som plockad
+    line.isPicked = true;
+    line.pickedQuantity = pickedQuantity || line.quantity;
 
-    // Skapa faktura
-    const invoice = await Invoice.create({
-      order: order._id,
-      orderNumber: order.orderNumber,
-      customer: order.customer,
-      invoiceLines,
-      vatRate: vatRate || 25,
-      notes,
-      createdBy: req.user._id
+    // Skapa lagerrörelse för uttag
+    await StockMovement.createMovement({
+      article: line.article._id,
+      movementType: 'out',
+      quantity: line.pickedQuantity,
+      reference: 'order',
+      referenceId: order._id,
+      referenceNumber: order.orderNumber,
+      referenceModel: 'Order',
+      notes: `Plockning av order ${order.orderNumber}`,
+      user: req.user._id
     });
 
-    // Uppdatera orderstatus
-    order.status = 'invoiced';
+    // Kontrollera om alla rader är plockade
+    const allPicked = order.orderLines.every(l => l.isPicked);
+    if (allPicked) {
+      order.status = 'picked';
+      order.pickedBy = req.user._id;
+      order.pickedAt = new Date();
+    }
+
     await order.save();
 
-    const populatedInvoice = await Invoice.findById(invoice._id)
-      .populate('order')
-      .populate('createdBy', 'name email');
-
-    // Emit socket event
+    // Emit socket events
     if (req.io) {
-      req.io.emit('invoice:created', populatedInvoice);
+      req.io.emit('picking:completed', { orderId, lineId });
       req.io.emit('order:updated', order);
     }
 
-    res.status(201).json({
-      success: true,
-      data: populatedInvoice
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Fel vid skapande av faktura',
-      error: error.message
-    });
-  }
-};
-
-// @desc    Uppdatera faktura
-// @route   PUT /api/invoices/:id
-// @access  Private
-exports.updateInvoice = async (req, res) => {
-  try {
-    let invoice = await Invoice.findById(req.params.id);
-
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Faktura hittades inte'
-      });
-    }
-
-    // Tillåt inte uppdatering av betalda fakturor
-    if (invoice.status === 'paid') {
-      return res.status(400).json({
-        success: false,
-        message: 'Kan inte uppdatera betald faktura'
-      });
-    }
-
-    invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    }).populate('order');
-
-    // Emit socket event
-    if (req.io) {
-      req.io.emit('invoice:updated', invoice);
-    }
-
     res.json({
       success: true,
-      data: invoice
+      data: order
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Fel vid uppdatering av faktura',
+      message: 'Fel vid plockning',
       error: error.message
     });
   }
 };
 
-// @desc    Uppdatera fakturastatus
-// @route   PUT /api/invoices/:id/status
+// @desc    Hämta lagerstatistik
+// @route   GET /api/stock/statistics
 // @access  Private
-exports.updateInvoiceStatus = async (req, res) => {
+exports.getStockStatistics = async (req, res) => {
   try {
-    const { status, paidAmount, paidDate, paymentReference } = req.body;
-    
-    const invoice = await Invoice.findById(req.params.id);
+    const totalArticles = await Article.countDocuments({ active: true });
+    const lowStockArticles = await Article.countDocuments({
+      $expr: { $lte: ['$stockQuantity', '$minStockLevel'] },
+      active: true
+    });
 
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Faktura hittades inte'
-      });
-    }
-
-    invoice.status = status;
-
-    if (status === 'sent' && !invoice.sentDate) {
-      invoice.sentDate = new Date();
-    }
-
-    if (status === 'paid') {
-      invoice.paidDate = paidDate || new Date();
-      invoice.paidAmount = paidAmount || invoice.totalAmount;
-      if (paymentReference) {
-        invoice.paymentReference = paymentReference;
+    const stockValue = await Article.aggregate([
+      { $match: { active: true } },
+      { 
+        $group: { 
+          _id: null, 
+          totalValue: { 
+            $sum: { $multiply: ['$stockQuantity', '$price'] } 
+          } 
+        } 
       }
-    }
-
-    await invoice.save();
-
-    // Emit socket event
-    if (req.io) {
-      req.io.emit('invoice:updated', invoice);
-    }
-
-    res.json({
-      success: true,
-      data: invoice
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Fel vid uppdatering av fakturastatus',
-      error: error.message
-    });
-  }
-};
-
-// @desc    Ta bort faktura
-// @route   DELETE /api/invoices/:id
-// @access  Private/Admin
-exports.deleteInvoice = async (req, res) => {
-  try {
-    const invoice = await Invoice.findById(req.params.id);
-
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Faktura hittades inte'
-      });
-    }
-
-    // Tillåt inte borttagning av skickade eller betalda fakturor
-    if (invoice.status === 'sent' || invoice.status === 'paid') {
-      return res.status(400).json({
-        success: false,
-        message: 'Kan inte ta bort skickade eller betalda fakturor'
-      });
-    }
-
-    // Uppdatera kopplad order tillbaka till picked
-    if (invoice.order) {
-      await Order.findByIdAndUpdate(invoice.order, { status: 'picked' });
-    }
-
-    await invoice.deleteOne();
-
-    res.json({
-      success: true,
-      data: {}
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Fel vid borttagning av faktura',
-      error: error.message
-    });
-  }
-};
-
-// @desc    Hämta förfallna fakturor
-// @route   GET /api/invoices/overdue
-// @access  Private
-exports.getOverdueInvoices = async (req, res) => {
-  try {
-    const invoices = await Invoice.find({
-      dueDate: { $lt: new Date() },
-      status: { $nin: ['paid', 'cancelled'] }
-    })
-    .populate('order')
-    .sort({ dueDate: 1 });
-
-    res.json({
-      success: true,
-      count: invoices.length,
-      data: invoices
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Fel vid hämtning av förfallna fakturor',
-      error: error.message
-    });
-  }
-};
-
-// @desc    Hämta fakturastatistik
-// @route   GET /api/invoices/statistics
-// @access  Private
-exports.getInvoiceStatistics = async (req, res) => {
-  try {
-    const totalInvoices = await Invoice.countDocuments();
-    const unpaidInvoices = await Invoice.countDocuments({ 
-      status: { $nin: ['paid', 'cancelled'] } 
-    });
-    const overdueInvoices = await Invoice.countDocuments({
-      dueDate: { $lt: new Date() },
-      status: { $nin: ['paid', 'cancelled'] }
-    });
-
-    const totalValue = await Invoice.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
 
-    const unpaidValue = await Invoice.aggregate([
-      { $match: { status: { $nin: ['paid', 'cancelled'] } } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    const totalReserved = await Article.aggregate([
+      { $match: { active: true } },
+      { $group: { _id: null, total: { $sum: '$reservedQuantity' } } }
     ]);
 
     res.json({
       success: true,
       data: {
-        totalInvoices,
-        unpaidInvoices,
-        overdueInvoices,
-        totalValue: totalValue[0]?.total || 0,
-        unpaidValue: unpaidValue[0]?.total || 0
+        totalArticles,
+        lowStockArticles,
+        stockValue: stockValue[0]?.totalValue || 0,
+        totalReserved: totalReserved[0]?.total || 0
       }
     });
   } catch (error) {

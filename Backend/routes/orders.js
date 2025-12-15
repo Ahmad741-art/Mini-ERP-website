@@ -1,23 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getStockOverview,
-  getStockMovements,
-  createStockMovement,
-  getPickingLines,
-  completePickingLine,
-  getStockStatistics
-} = require('../controllers/stockController');
+  getOrders,
+  getOrder,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+  updateOrderStatus
+} = require('../controllers/orderController');
 const { protect } = require('../middleware/auth');
-const { checkPermission } = require('../middleware/roleCheck');
+const { authorize } = require('../middleware/roleCheck');
 
-router.get('/', protect, checkPermission('view_stock'), getStockOverview);
-router.get('/statistics', protect, checkPermission('view_stock'), getStockStatistics);
-router.get('/movements', protect, checkPermission('view_stock'), getStockMovements);
-router.post('/movement', protect, checkPermission('update_stock'), createStockMovement);
+router.route('/')
+  .get(protect, getOrders)
+  .post(protect, createOrder);
 
-// Plockningsrelaterade routes
-router.get('/picking', protect, checkPermission('pick_orders'), getPickingLines);
-router.put('/picking/:orderId/:lineId', protect, checkPermission('pick_orders'), completePickingLine);
+router.route('/:id')
+  .get(protect, getOrder)
+  .put(protect, updateOrder)
+  .delete(protect, authorize('admin'), deleteOrder);
+
+router.put('/:id/status', protect, updateOrderStatus);
 
 module.exports = router;

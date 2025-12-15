@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
       verifyToken();
     }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const verifyToken = async () => {
@@ -43,16 +44,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login with:', email);
       const response = await authAPI.login({ email, password });
+      console.log('Full response:', response);
+      console.log('Response data:', response.data);
       
       if (response.data.success) {
         const { user, token } = response.data.data;
+        console.log('Extracted user:', user);
+        console.log('Extracted token:', token);
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         setUser(user);
         return { success: true };
+      } else {
+        console.log('Response success was false');
+        return { success: false, message: 'Inloggning misslyckades' };
       }
     } catch (error) {
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
       const message = error.response?.data?.message || 'Inloggning misslyckades';
       return { success: false, message };
     }
