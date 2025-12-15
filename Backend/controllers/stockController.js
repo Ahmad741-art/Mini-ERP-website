@@ -293,4 +293,3 @@ exports.getStockStatistics = async (req, res) => {
   }
 };
 
-const log
