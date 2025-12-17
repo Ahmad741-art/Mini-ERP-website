@@ -1,34 +1,41 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const User = require('../models/User');
 const Article = require('../models/Article');
 const Order = require('../models/Order');
+const Invoice = require('../models/Invoice');
 
-dotenv.config();
+// Fallback to hardcoded URI if .env doesn't load
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mini-erp';
+
+console.log('Using MongoDB URI:', MONGO_URI);
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('MongoDB Connected');
+    await mongoose.connect(MONGO_URI);
+    console.log('MongoDB Connected for seeding...');
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error('Error connecting to MongoDB:', error.message);
     process.exit(1);
   }
 };
 
 const seedData = async () => {
   try {
-    // Rensa befintlig data
-    console.log('Rensar befintlig data...');
+    await connectDB();
+
+    // Clear existing data
+    console.log('Clearing existing data...');
     await User.deleteMany();
     await Article.deleteMany();
     await Order.deleteMany();
+    await Invoice.deleteMany();
 
-    // Skapa användare
-    console.log('Skapar användare...');
+    // Create users
+    console.log('Creating users...');
     const users = await User.create([
       {
-        name: 'Admin Användare',
+        name: 'Admin User',
         email: 'admin@miniorp.se',
         password: 'admin123',
         role: 'admin'
@@ -46,237 +53,239 @@ const seedData = async () => {
         role: 'ekonomi'
       }
     ]);
-    console.log(`✓ ${users.length} användare skapade`);
 
-    // Skapa artiklar
-    console.log('Skapar artiklar...');
+    console.log(`Created ${users.length} users`);
+
+    // Create articles
+    console.log('Creating articles...');
     const articles = await Article.create([
       {
-        articleNumber: 'ART001',
-        name: 'Skrivbordsstol Premium',
-        description: 'Ergonomisk kontorsstol med justerbar höjd',
-        price: 2499,
-        cost: 1200,
-        stockQuantity: 25,
-        minStockLevel: 5,
+        articleNumber: 'ART-001',
+        name: 'Kontorsstol Premium',
         category: 'Möbler',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART002',
-        name: 'Laptop Dell XPS 15',
-        description: '15.6" bärbar dator, i7, 16GB RAM',
-        price: 15990,
-        cost: 12000,
-        stockQuantity: 8,
-        minStockLevel: 3,
-        category: 'Elektronik',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART003',
-        name: 'Whiteboard 120x90cm',
-        description: 'Magnetisk whiteboard med pennfack',
-        price: 899,
-        cost: 450,
-        stockQuantity: 15,
-        minStockLevel: 5,
-        category: 'Kontorsmaterial',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART004',
-        name: 'Skrivarpapper A4',
-        description: 'Kopieringspapper 80g, 500 ark/paket',
-        price: 45,
-        cost: 25,
-        stockQuantity: 200,
-        minStockLevel: 50,
-        category: 'Kontorsmaterial',
-        unit: 'paket'
-      },
-      {
-        articleNumber: 'ART005',
-        name: 'USB-C Hub 7-port',
-        description: 'Hub med HDMI, USB 3.0 och kortläsare',
-        price: 399,
-        cost: 200,
-        stockQuantity: 30,
+        stockQuantity: 50,
+        reservedQuantity: 0,
         minStockLevel: 10,
-        category: 'Elektronik',
-        unit: 'st'
+        unit: 'st',
+        price: 2500
       },
       {
-        articleNumber: 'ART006',
-        name: 'Höj och sänkbart skrivbord',
-        description: 'Elektriskt justerbart 120x80cm',
-        price: 4999,
-        cost: 3000,
-        stockQuantity: 3,
-        minStockLevel: 5,
+        articleNumber: 'ART-002',
+        name: 'Skrivbord 160x80',
         category: 'Möbler',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART007',
-        name: 'Trådlös mus Logitech MX',
-        description: 'Ergonomisk trådlös mus',
-        price: 799,
-        cost: 450,
-        stockQuantity: 45,
-        minStockLevel: 15,
-        category: 'Elektronik',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART008',
-        name: 'Mekaniskt tangentbord',
-        description: 'RGB-belysning, Cherry MX Brown',
-        price: 1299,
-        cost: 700,
-        stockQuantity: 20,
-        minStockLevel: 8,
-        category: 'Elektronik',
-        unit: 'st'
-      },
-      {
-        articleNumber: 'ART009',
-        name: 'Hörlurar Sony WH-1000XM5',
-        description: 'Brusreducerande trådlösa hörlurar',
-        price: 3990,
-        cost: 2500,
-        stockQuantity: 2,
+        stockQuantity: 30,
+        reservedQuantity: 0,
         minStockLevel: 5,
-        category: 'Elektronik',
-        unit: 'st'
+        unit: 'st',
+        price: 4500
       },
       {
-        articleNumber: 'ART010',
-        name: 'Monitor 27" 4K',
-        description: 'IPS-panel, USB-C, höjdjusterbar',
-        price: 5499,
-        cost: 3500,
-        stockQuantity: 12,
-        minStockLevel: 4,
+        articleNumber: 'ART-003',
+        name: 'Laptop Dell XPS 15',
         category: 'Elektronik',
-        unit: 'st'
+        stockQuantity: 15,
+        reservedQuantity: 0,
+        minStockLevel: 5,
+        unit: 'st',
+        price: 18000
+      },
+      {
+        articleNumber: 'ART-004',
+        name: 'Datormus Logitech',
+        category: 'Elektronik',
+        stockQuantity: 100,
+        reservedQuantity: 0,
+        minStockLevel: 20,
+        unit: 'st',
+        price: 350
+      },
+      {
+        articleNumber: 'ART-005',
+        name: 'Papper A4 500 ark',
+        category: 'Kontorsmaterial',
+        stockQuantity: 200,
+        reservedQuantity: 0,
+        minStockLevel: 50,
+        unit: 'paket',
+        price: 45
+      },
+      {
+        articleNumber: 'ART-006',
+        name: 'Pennor BIC 10-pack',
+        category: 'Kontorsmaterial',
+        stockQuantity: 8,
+        reservedQuantity: 0,
+        minStockLevel: 20,
+        unit: 'förp',
+        price: 25
+      },
+      {
+        articleNumber: 'ART-007',
+        name: 'Whiteboard 120x90',
+        category: 'Möbler',
+        stockQuantity: 12,
+        reservedQuantity: 0,
+        minStockLevel: 3,
+        unit: 'st',
+        price: 1200
+      },
+      {
+        articleNumber: 'ART-008',
+        name: 'Headset Jabra Evolve2',
+        category: 'Elektronik',
+        stockQuantity: 25,
+        reservedQuantity: 0,
+        minStockLevel: 10,
+        unit: 'st',
+        price: 2200
       }
     ]);
-    console.log(`✓ ${articles.length} artiklar skapade`);
 
-    // Skapa några testordrar
-    console.log('Skapar testordrar...');
+    console.log(`Created ${articles.length} articles`);
+
+    // Create orders
+    console.log('Creating orders...');
     const orders = await Order.create([
       {
+        orderNumber: 'ORD-2024-001',
         customer: {
-          name: 'Företag AB',
-          email: 'order@foretagab.se',
+          name: 'Acme Corp AB',
+          email: 'order@acme.se',
           phone: '08-123456',
-          address: {
-            street: 'Storgatan 1',
-            postalCode: '11122',
-            city: 'Stockholm',
-            country: 'Sverige'
-          }
+          address: 'Storgatan 1, 111 22 Stockholm'
         },
         orderLines: [
           {
             article: articles[0]._id,
             articleNumber: articles[0].articleNumber,
             articleName: articles[0].name,
-            quantity: 5,
-            price: articles[0].price
+            quantity: 10,
+            unitPrice: articles[0].price,
+            totalPrice: articles[0].price * 10
           },
+          {
+            article: articles[1]._id,
+            articleNumber: articles[1].articleNumber,
+            articleName: articles[1].name,
+            quantity: 5,
+            unitPrice: articles[1].price,
+            totalPrice: articles[1].price * 5
+          }
+        ],
+        status: 'not_ready',
+        totalAmount: (articles[0].price * 10) + (articles[1].price * 5)
+      },
+      {
+        orderNumber: 'ORD-2024-002',
+        customer: {
+          name: 'TechStart AB',
+          email: 'inkop@techstart.se',
+          phone: '08-654321',
+          address: 'Vasagatan 10, 111 20 Stockholm'
+        },
+        orderLines: [
           {
             article: articles[2]._id,
             articleNumber: articles[2].articleNumber,
             articleName: articles[2].name,
             quantity: 3,
-            price: articles[2].price
+            unitPrice: articles[2].price,
+            totalPrice: articles[2].price * 3
+          },
+          {
+            article: articles[7]._id,
+            articleNumber: articles[7].articleNumber,
+            articleName: articles[7].name,
+            quantity: 3,
+            unitPrice: articles[7].price,
+            totalPrice: articles[7].price * 3
           }
         ],
         status: 'ready_to_pick',
-        createdBy: users[0]._id
+        totalAmount: (articles[2].price * 3) + (articles[7].price * 3)
       },
       {
+        orderNumber: 'ORD-2024-003',
         customer: {
-          name: 'Tech Solutions HB',
-          email: 'kontakt@techsolutions.se',
-          phone: '031-987654',
-          address: {
-            street: 'Teknikvägen 5',
-            postalCode: '41234',
-            city: 'Göteborg',
-            country: 'Sverige'
-          }
+          name: 'Kontorsbolaget Sverige AB',
+          email: 'order@kontorsbolaget.se',
+          phone: '08-789012',
+          address: 'Kungsgatan 25, 111 43 Stockholm'
         },
         orderLines: [
-          {
-            article: articles[1]._id,
-            articleNumber: articles[1].articleNumber,
-            articleName: articles[1].name,
-            quantity: 2,
-            price: articles[1].price
-          },
           {
             article: articles[4]._id,
             articleNumber: articles[4].articleNumber,
             articleName: articles[4].name,
-            quantity: 5,
-            price: articles[4].price
-          }
-        ],
-        status: 'ready_to_pick',
-        createdBy: users[0]._id
-      },
-      {
-        customer: {
-          name: 'Startup Innovations',
-          email: 'hello@startup.se',
-          phone: '070-1234567',
-          address: {
-            street: 'Innovation Street 12',
-            postalCode: '21143',
-            city: 'Malmö',
-            country: 'Sverige'
-          }
-        },
-        orderLines: [
+            quantity: 50,
+            unitPrice: articles[4].price,
+            totalPrice: articles[4].price * 50,
+            isPicked: true,
+            pickedQuantity: 50
+          },
           {
             article: articles[5]._id,
             articleNumber: articles[5].articleNumber,
             articleName: articles[5].name,
-            quantity: 1,
-            price: articles[5].price
+            quantity: 20,
+            unitPrice: articles[5].price,
+            totalPrice: articles[5].price * 20,
+            isPicked: true,
+            pickedQuantity: 20
           }
         ],
-        status: 'not_ready',
-        notes: 'Väntar på lagerpåfyllning av höj/sänk-bord',
-        createdBy: users[0]._id
+        status: 'picked',
+        totalAmount: (articles[4].price * 50) + (articles[5].price * 20)
       }
     ]);
-    console.log(`✓ ${orders.length} ordrar skapade`);
 
-    console.log('\n═══════════════════════════════════════');
-    console.log('✓ Databas seedning klar!');
-    console.log('═══════════════════════════════════════');
-    console.log('\nInloggningsuppgifter:');
-    console.log('\nAdmin:');
-    console.log('  Email: admin@miniorp.se');
-    console.log('  Lösenord: admin123');
-    console.log('\nLager:');
-    console.log('  Email: lager@miniorp.se');
-    console.log('  Lösenord: lager123');
-    console.log('\nEkonomi:');
-    console.log('  Email: ekonomi@miniorp.se');
-    console.log('  Lösenord: ekonomi123');
-    console.log('═══════════════════════════════════════\n');
+    console.log(`Created ${orders.length} orders`);
+
+    // Update article reserved quantities for ready_to_pick orders
+    await Article.findByIdAndUpdate(articles[2]._id, { $inc: { reservedQuantity: 3 } });
+    await Article.findByIdAndUpdate(articles[7]._id, { $inc: { reservedQuantity: 3 } });
+
+    // Create invoices
+    console.log('Creating invoices...');
+    const invoices = await Invoice.create([
+      {
+        invoiceNumber: 'INV-2024-001',
+        order: orders[2]._id,
+        orderNumber: orders[2].orderNumber,
+        customer: orders[2].customer,
+        invoiceLines: orders[2].orderLines.map(line => ({
+          description: line.articleName,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          totalPrice: line.totalPrice
+        })),
+        subtotal: orders[2].totalAmount,
+        vatAmount: orders[2].totalAmount * 0.25,
+        totalAmount: orders[2].totalAmount * 1.25,
+        status: 'sent',
+        invoiceDate: new Date(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+      }
+    ]);
+
+    console.log(`Created ${invoices.length} invoices`);
+
+    console.log('\n✅ Database seeded successfully!');
+    console.log('\n📊 Summary:');
+    console.log(`   Users: ${users.length}`);
+    console.log(`   Articles: ${articles.length}`);
+    console.log(`   Orders: ${orders.length}`);
+    console.log(`   Invoices: ${invoices.length}`);
+    console.log('\n👤 Demo Users:');
+    console.log('   Admin: admin@miniorp.se / admin123');
+    console.log('   Lager: lager@miniorp.se / lager123');
+    console.log('   Ekonomi: ekonomi@miniorp.se / ekonomi123');
 
     process.exit(0);
   } catch (error) {
-    console.error('Fel vid seedning:', error);
+    console.error('Error seeding database:', error);
     process.exit(1);
   }
 };
 
-connectDB().then(() => seedData());
+seedData();
