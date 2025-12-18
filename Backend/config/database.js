@@ -2,20 +2,24 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    // Check if MONGO_URI is defined
+    if (!process.env.MONGO_URI) {
+      console.error('❌ ERROR: MONGO_URI is not defined in .env file');
+      console.error('Please add to your .env file: MONGO_URI=mongodb://localhost:27017/mini-erp');
+      process.exit(1);
+    }
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     
     // Hantera connection events
     mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
+      console.error(`❌ MongoDB connection error: ${err}`);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+      console.log('⚠️  MongoDB disconnected');
     });
 
     // Graceful shutdown
@@ -26,7 +30,7 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
     process.exit(1);
   }
 };
