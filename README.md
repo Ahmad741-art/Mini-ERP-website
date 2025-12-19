@@ -1,286 +1,286 @@
-Mini-ERP Light - Lager & Order Dashboard
+# Mini-ERP SHEIN Theme - Quick Start Guide 🚀
 
-Ett webbbaserat realtidssystem för att hantera ordrar, lagerstatus, plockning och fakturering. Perfekt för mindre lager och e-handel.
+## 📋 What You're Getting
 
-Översikt
+A complete visual makeover of your Mini-ERP system with:
+- **SHEIN-inspired design**: Black & white with pink accents (#ff385c)
+- **Dark Mode**: Toggle between light and dark themes
+- **Enhanced Features**: Search, notifications, remember me, show password
+- **Better UX**: Smooth animations, modern interface, professional look
 
-Mini-ERP Light är en fullstack-applikation som ger dig realtidskoll på:
+---
 
-Ordrar - Filtrera och hantera order genom hela flödet
-Lager - Se nuvarande saldo, reserverat saldo och varningar
-Plockning - Bocka av plockrader snabbt med tangentbordsnavigering
-Fakturering - Spåra fakturastatusar från klar till betald
-Funktioner
+## ⚡ Quick Installation (5 Steps)
 
-Användarhantering
+### Step 1: Replace CSS Files
 
-Inloggning med JWT-autentisering
-Tre roller: Admin, Lager, Ekonomi
-Rollbaserad åtkomstkontroll
-Orderhantering
+Copy these files and rename them (remove `-SHEIN` or `-Enhanced`):
 
-Visa ordrar med realtidsuppdatering
-Filtrera på status:
-Ej klar för plock
-Klar för plock
-Plockad
-Fakturerad
-Automatisk statusuppdatering vid lagerändringar
-Lagerhantering
+```
+Frontend/src/
+├── App.css                    → Replace with App-SHEIN.css
+├── components/
+│   ├── Auth/
+│   │   └── Login.css          → Replace with Login-SHEIN.css
+│   └── Layout/
+│       └── Layout.css         → Replace with Layout-SHEIN.css
+```
 
-Realtidsvy av lagerstatus
-Nuvarande saldo och reserverat saldo
-Varningar vid låg lagernivå
-Lagerhistorik och rörelser
-Plockfunktion
+### Step 2: Add New Files
 
-Plockrader sorterade efter prioritet
-Snabb avbockning med tangentbord
-Automatisk reservering av lagersaldo
-Realtidsuppdatering till alla användare
-Fakturahantering
+Add these NEW files to your project:
 
-Statusar: Klar för fakturering, Skickad, Betald, Förfallen
-Filtrera på fakturastatusar
-Kopplade till ordrar
-Teknikstack
+```
+Frontend/src/
+├── contexts/
+│   └── DarkModeContext.js     → NEW FILE (copy as-is)
+└── components/
+    └── Layout/
+        └── DarkModeToggle.js  → NEW FILE (copy as-is)
+```
 
-Backend
+### Step 3: Replace Component Files
 
-Node.js med Express
-MongoDB för databas
-Socket.io för realtidskommunikation
-JWT för autentisering
-Bcrypt för lösenordshashning
-Frontend
+Replace these existing component files:
 
-React med Hooks
-Socket.io-client för realtidsuppdateringar
-Axios för API-anrop
-React Router för navigation
-CSS Modules för styling
-Installation
+```
+Frontend/src/components/
+├── Auth/
+│   └── Login.js               → Replace with Login-Enhanced.js
+└── Layout/
+    ├── Header.js              → Replace with Header-Enhanced.js
+    └── Sidebar.js             → Replace with Sidebar-Enhanced.js
+```
 
-Förutsättningar
+### Step 4: Replace App.js
 
-Node.js (v14 eller senare)
-MongoDB (v4.4 eller senare)
-npm eller yarn
-Backend Setup
+```
+Frontend/src/
+└── App.js                     → Replace with App-Enhanced.js
+```
 
-Klona projektet och navigera till backend-mappen
-cd mini-erp/backend
+### Step 5: Update index.js
 
-Installera dependencies
-npm install
+Open `Frontend/src/index.js` and update it to:
 
-Skapa .env-fil (se .env.example)
-cp .env.example .env
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './App.css';  // Make sure this points to your renamed App-SHEIN.css
+import App from './App';
+import { AuthProvider } from './contexts/AuthContext';
 
-Uppdatera .env med dina inställningar
-MONGODB_URI=mongodb://localhost:27017/mini-erp
-JWT_SECRET=din_hemliga_nyckel
-PORT=5000
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </React.StrictMode>
+);
+```
 
-Starta MongoDB (om lokalt)
-mongod
+---
 
-Starta servern
-npm run dev
-Frontend Setup
+## ✅ Verification Checklist
 
-Navigera till frontend-mappen
-cd mini-erp/frontend
+After installation, verify:
 
-Installera dependencies
-npm install
+- [ ] **Login page** has black background with animated circles
+- [ ] **Show/hide password** eye icon works
+- [ ] **Remember me** checkbox is present
+- [ ] **Demo accounts** can be clicked for auto-login
+- [ ] **Dark mode button** (moon/sun) appears in bottom-right corner
+- [ ] **Sidebar** is black with pink accents
+- [ ] **Search bar** is in the header
+- [ ] **Notification bell** appears in header
 
-Skapa .env-fil
-cp .env.example .env
+---
 
-Uppdatera med backend URL (vanligtvis http://localhost:5000)
-REACT_APP_API_URL=http://localhost:5000
+## 🎯 New Features You Can Use
 
-Starta utvecklingsservern
-npm start
-Projektstruktur
+### 1. **Dark Mode** 🌙
+- **Location**: Floating button in bottom-right corner
+- **Icon**: Moon (light mode) / Sun (dark mode)
+- **Saves**: Your preference automatically
 
-mini-erp/
-├── backend/
-│   ├── config/
-│   │   └── database.js          # MongoDB-anslutning
-│   ├── models/
-│   │   ├── User.js               # Användarmodell
-│   │   ├── Order.js              # Ordermodell
-│   │   ├── Article.js            # Artikelmodell
-│   │   ├── StockMovement.js      # Lagerrörelser
-│   │   └── Invoice.js            # Fakturamodell
-│   ├── routes/
-│   │   ├── auth.js               # Autentisering
-│   │   ├── orders.js             # Orderhantering
-│   │   ├── articles.js           # Artikelhantering
-│   │   ├── stock.js              # Lagerhantering
-│   │   └── invoices.js           # Fakturahantering
-│   ├── middleware/
-│   │   ├── auth.js               # JWT-verifiering
-│   │   └── roleCheck.js          # Rollkontroll
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── orderController.js
-│   │   ├── articleController.js
-│   │   ├── stockController.js
-│   │   └── invoiceController.js
-│   ├── utils/
-│   │   └── socketHandler.js      # Socket.io-hantering
-│   ├── seeds/
-│   │   └── seedData.js           # Testdata
-│   ├── server.js                 # Huvudserverfil
-│   ├── package.json
-│   └── .env.example
-│
-├── frontend/
-│   ├── public/
-│   │   └── index.html
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Layout/
-│   │   │   │   ├── Header.js
-│   │   │   │   ├── Sidebar.js
-│   │   │   │   └── Layout.js
-│   │   │   ├── Auth/
-│   │   │   │   └── Login.js
-│   │   │   ├── Orders/
-│   │   │   │   ├── OrderList.js
-│   │   │   │   ├── OrderDetails.js
-│   │   │   │   └── OrderFilter.js
-│   │   │   ├── Stock/
-│   │   │   │   ├── StockList.js
-│   │   │   │   ├── StockDetails.js
-│   │   │   │   └── LowStockWarning.js
-│   │   │   ├── Picking/
-│   │   │   │   ├── PickingList.js
-│   │   │   │   └── PickingRow.js
-│   │   │   └── Invoices/
-│   │   │       ├── InvoiceList.js
-│   │   │       └── InvoiceDetails.js
-│   │   ├── contexts/
-│   │   │   ├── AuthContext.js
-│   │   │   └── SocketContext.js
-│   │   ├── hooks/
-│   │   │   └── useSocket.js
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── styles/
-│   │   │   └── components/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   └── index.js
-│   ├── package.json
-│   └── .env.example
-│
-└── README.md
-API Endpoints
+### 2. **Show/Hide Password** 👁️
+- **Location**: Login page, inside password field
+- **Icon**: Eye icon on the right
+- **Use**: Click to toggle password visibility
 
-Autentisering
+### 3. **Remember Me** ✓
+- **Location**: Login page, below password
+- **Use**: Check to save your email address
+- **Next time**: Email auto-fills when you return
 
-POST /api/auth/login - Logga in
-POST /api/auth/register - Registrera ny användare (admin)
-GET /api/auth/me - Hämta inloggad användare
-Ordrar
+### 4. **Quick Demo Login** ⚡
+- **Location**: Login page, bottom section
+- **Use**: Click any demo account card
+- **Result**: Auto-fills and logs you in
 
-GET /api/orders - Hämta alla ordrar (med filter)
-GET /api/orders/:id - Hämta specifik order
-POST /api/orders - Skapa ny order
-PUT /api/orders/:id - Uppdatera order
-PUT /api/orders/:id/status - Uppdatera orderstatus
-Artiklar & Lager
+### 5. **Global Search** 🔍
+- **Location**: Header bar, center
+- **Use**: Search orders, products, customers
+- **Shortcut**: Click and type
 
-GET /api/articles - Hämta alla artiklar
-GET /api/articles/:id - Hämta specifik artikel
-POST /api/articles - Skapa ny artikel
-GET /api/stock - Hämta lagervy
-GET /api/stock/low - Hämta artiklar med lågt lager
-POST /api/stock/movement - Registrera lagerrörelse
-Plockning
+### 6. **Notifications** 🔔
+- **Location**: Header bar, near user profile
+- **Badge**: Shows number of new notifications
+- **Use**: Click bell icon to view dropdown
 
-GET /api/picking - Hämta plockrader
-PUT /api/picking/:id/complete - Markera plockrad som klar
-Fakturor
-GET /api/invoices - Hämta alla fakturor
-GET /api/invoices/:id - Hämta specifik faktura
-POST /api/invoices - Skapa faktura från order
-PUT /api/invoices/:id/status - Uppdatera fakturastatus
-Socket.io Events
+---
 
-Server → Client
+## 🎨 Color Scheme Reference
 
-order:created - Ny order skapad
-order:updated - Order uppdaterad
-stock:updated - Lager uppdaterat
-picking:completed - Plockning klar
-invoice:created - Faktura skapad
-stock:low-warning - Varning för lågt lager
-Client → Server
+```css
+Primary Colors:
+- Black:      #000000  (sidebar, buttons)
+- White:      #ffffff  (backgrounds, text)
+- Pink:       #ff385c  (accents, hover states)
 
-subscribe:orders - Prenumerera på orderuppdateringar
-subscribe:stock - Prenumerera på lageruppdateringar
-Standardanvändare (efter seed)
+Status Colors:
+- Success:    #00c853  (green)
+- Warning:    #ffd600  (yellow)
+- Error:      #ff1744  (red)
+- Info:       #00b0ff  (blue)
+```
 
-Admin:
-- Email: admin@miniorp.se
-- Password: admin123
-- Roll: admin
+---
 
-Lager:
-- Email: lager@miniorp.se
-- Password: lager123
-- Roll: lager
+## 🔧 Troubleshooting
 
-Ekonomi:
-- Email: ekonomi@miniorp.se
-- Password: ekonomi123
-- Roll: ekonomi
-Utveckling
+### Styles not showing up?
+1. Clear browser cache: `Ctrl + Shift + R` (Windows) or `Cmd + Shift + R` (Mac)
+2. Check that CSS file names are correct
+3. Verify all imports in components match file names
 
-Köra tester
+### Dark mode not working?
+1. Make sure `DarkModeContext.js` is in `src/contexts/`
+2. Check that `App.js` wraps components with `DarkModeProvider`
+3. Clear localStorage: Open Console → Type `localStorage.clear()` → Refresh
 
-# Backend
-cd backend
-npm test
+### Components breaking?
+1. Check browser console (F12) for errors
+2. Verify all file paths are correct
+3. Make sure you copied ALL files from the package
 
-# Frontend
-cd frontend
-npm test
-Seeda databasen med testdata
+### Login page looks wrong?
+1. Ensure `Login.css` was replaced with `Login-SHEIN.css`
+2. Check that `Login.js` imports the correct CSS file
+3. Hard refresh the page
 
-cd backend
-npm run seed
-Produktionsbygge
-# Frontend
-cd frontend
-npm run build
+---
 
-# Backend sätts i produktion genom att sätta NODE_ENV=production
-Säkerhet
+## 📱 Mobile Support
 
-JWT-tokens för autentisering
-Bcrypt för lösenordshashning
-Rollbaserad åtkomstkontroll
-Input-validering på alla endpoints
-Rate limiting (rekommenderas i produktion)
-HTTPS (rekommenderas i produktion)
-Framtida förbättringar
+The design is fully responsive:
+- **Desktop** (>1024px): Full layout with all features
+- **Tablet** (768-1024px): Compact sidebar, essential features
+- **Mobile** (<768px): Stacked layout, optimized for touch
 
- PDF-generering för fakturor
- Email-notifikationer
- Statistik och rapporter
- Barcode-scanning
- Multiwarehouse-support
- Export till bokföringssystem
- Mobilapp
-Licens
+---
 
-MIT
+## 🚀 Testing Your Installation
 
-Support
-För frågor eller problem, skapa ett issue i projektet.
+1. **Start the app**:
+   ```bash
+   cd Frontend
+   npm start
+   ```
+
+2. **Open browser**: http://localhost:3000
+
+3. **Test features**:
+   - ✓ Click a demo account → Should auto-login
+   - ✓ Toggle dark mode → Colors should change
+   - ✓ Check remember me → Email should save
+   - ✓ Click show password → Password becomes visible
+   - ✓ Try search bar → Should accept input
+   - ✓ Click notification bell → Dropdown appears
+
+---
+
+## 📊 What Changed vs. Original
+
+| Feature | Before | After |
+|---------|--------|-------|
+| **Colors** | Blue/Purple gradients | Black/White with Pink accents |
+| **Dark Mode** | ❌ None | ✅ Full support with toggle |
+| **Login UX** | Basic form | Show password, remember me, quick demo access |
+| **Search** | ❌ None | ✅ Global search bar in header |
+| **Notifications** | ❌ None | ✅ Bell icon with badge counter |
+| **Animations** | Basic | Smooth, professional transitions |
+| **Mobile** | Functional | Fully optimized |
+
+---
+
+## ⏱️ Installation Time
+
+- **Beginner**: ~15 minutes
+- **Experienced**: ~5 minutes
+
+---
+
+## 💡 Pro Tips
+
+1. **Keep backups**: Save your original files before replacing
+2. **Test in stages**: Replace one component at a time if unsure
+3. **Use dark mode**: Try both themes to see the full effect
+4. **Customize colors**: Edit CSS variables in `App.css` to match your brand
+5. **Check responsive**: Test on different screen sizes
+
+---
+
+## 🎉 You're Done!
+
+Your Mini-ERP now has:
+- ✅ Professional SHEIN-inspired design
+- ✅ Dark mode support
+- ✅ Enhanced user experience
+- ✅ Modern interface
+- ✅ Better functionality
+
+**Enjoy your upgraded Mini-ERP!** 🎨✨
+
+---
+
+## 📞 Need Help?
+
+1. Check the full README for detailed explanations
+2. Review browser console for error messages
+3. Verify all file paths and imports
+4. Clear cache and try again
+
+---
+
+## 🔗 File Structure After Installation
+
+```
+Frontend/src/
+├── App.css (SHEIN theme)
+├── App.js (Enhanced)
+├── index.js (Updated)
+├── components/
+│   ├── Auth/
+│   │   ├── Login.js (Enhanced)
+│   │   └── Login.css (SHEIN theme)
+│   ├── Layout/
+│   │   ├── Header.js (Enhanced)
+│   │   ├── Sidebar.js (Enhanced)
+│   │   ├── Layout.js (Unchanged)
+│   │   ├── Layout.css (SHEIN theme)
+│   │   └── DarkModeToggle.js (NEW)
+│   ├── Orders/
+│   ├── Stock/
+│   ├── Picking/
+│   └── Invoices/
+└── contexts/
+    ├── AuthContext.js (Unchanged)
+    ├── SocketContext.js (Unchanged)
+    └── DarkModeContext.js (NEW)
+```
+
+---
+
+**That's it! Simple, clean, and ready to use.** 🚀
