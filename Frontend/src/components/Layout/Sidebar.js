@@ -10,25 +10,25 @@ const Sidebar = () => {
   const navItems = [
     {
       path: '/orders',
-      label: 'Ordrar',
+      label: 'Orders',
       icon: '📦',
       roles: ['admin', 'lager', 'ekonomi']
     },
     {
       path: '/stock',
-      label: 'Lager',
+      label: 'Inventory',
       icon: '📊',
       roles: ['admin', 'lager']
     },
     {
       path: '/picking',
-      label: 'Plockning',
+      label: 'Picking',
       icon: '✓',
       roles: ['admin', 'lager']
     },
     {
       path: '/invoices',
-      label: 'Fakturor',
+      label: 'Invoices',
       icon: '💰',
       roles: ['admin', 'ekonomi']
     }
@@ -41,8 +41,10 @@ const Sidebar = () => {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
-        <h1>Mini-ERP</h1>
-        <p>Lager & Order Dashboard</p>
+        <h1>
+          Mini<span className="logo-accent">ERP</span>
+        </h1>
+        <p>Warehouse & Orders</p>
       </div>
       
       <nav>
@@ -63,7 +65,7 @@ const Sidebar = () => {
 
       <div className="status-indicator">
         <span className={`status-dot ${connected ? 'connected' : 'disconnected'}`}></span>
-        {connected ? 'Ansluten' : 'Frånkopplad'}
+        {connected ? 'Connected' : 'Disconnected'}
       </div>
     </div>
   );
