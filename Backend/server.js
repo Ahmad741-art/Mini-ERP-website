@@ -16,11 +16,16 @@ connectDB();
 // Initiera Express
 const app = express();
 
+// CORS origins från environment variable eller default till localhost
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 // Skapa HTTP server och Socket.io
 const server = http.createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -31,7 +36,7 @@ setupSocketHandlers(io);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -91,6 +96,7 @@ server.listen(PORT, () => {
 ║  Port: ${PORT}                              ║
 ║  Database: Connected                      ║
 ║  Socket.io: Active                        ║
+║  CORS Origins: ${allowedOrigins.join(', ')}  ║
 ╚═══════════════════════════════════════════╝
   `);
 });
